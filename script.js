@@ -3,6 +3,7 @@ let currentTab = 'all';
 let selectedIds = new Set();
 
 const taskInput = document.getElementById('taskInput');
+const descInput = document.getElementById('descInput');
 const addBtn = document.getElementById('addBtn');
 const todoList = document.getElementById('todoList');
 const tabBtns = document.querySelectorAll('.tab-btn');
@@ -13,8 +14,10 @@ const selectedCountEl = document.getElementById('selectedCount');
 function addTask() {
   const text = taskInput.value.trim();
   if (!text) return;
-  todos.push({ id: Date.now(), text, done: false });
+  const description = descInput.value.trim();
+  todos.push({ id: Date.now(), text, description, done: false, completedAt: null });
   taskInput.value = '';
+  descInput.value = '';
   taskInput.focus();
   render();
 }
@@ -98,6 +101,12 @@ function render() {
       time.textContent = todo.completedAt || '';
 
       textWrap.append(span, time);
+      if (todo.description) {
+        const desc = document.createElement('span');
+        desc.className = 'desc';
+        desc.textContent = todo.description;
+        textWrap.appendChild(desc);
+      }
       li.append(selectBox, textWrap);
     } else {
       // 진행 중 항목: 완료 체크박스 + 즉시 삭제 버튼
@@ -108,9 +117,20 @@ function render() {
       checkbox.checked = false;
       checkbox.addEventListener('change', () => toggleDone(todo.id));
 
+      const textWrap = document.createElement('div');
+      textWrap.className = 'text-wrap';
+
       const span = document.createElement('span');
       span.className = 'text';
       span.textContent = todo.text;
+
+      textWrap.appendChild(span);
+      if (todo.description) {
+        const desc = document.createElement('span');
+        desc.className = 'desc';
+        desc.textContent = todo.description;
+        textWrap.appendChild(desc);
+      }
 
       const del = document.createElement('button');
       del.className = 'delete-btn';
@@ -118,7 +138,7 @@ function render() {
       del.title = '삭제';
       del.addEventListener('click', () => deleteTask(todo.id));
 
-      li.append(checkbox, span, del);
+      li.append(checkbox, textWrap, del);
     }
 
     todoList.appendChild(li);
