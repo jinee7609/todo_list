@@ -14,6 +14,7 @@ const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
 const selectedCountEl = document.getElementById('selectedCount');
 const groupListEl = document.getElementById('groupList');
 const addGroupBtn = document.getElementById('addGroupBtn');
+const groupSelectEl = document.getElementById('groupSelect');
 
 // ── 그룹 관리 ──
 function renderGroups() {
@@ -44,11 +45,22 @@ function renderGroups() {
   });
 }
 
+function renderGroupSelect() {
+  groupSelectEl.innerHTML = '<option value="">그룹 없음</option>';
+  groups.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = g.name;
+    groupSelectEl.appendChild(opt);
+  });
+}
+
 function addGroup() {
   const name = prompt('새 그룹 이름을 입력하세요');
   if (!name || !name.trim()) return;
   groups.push({ id: Date.now(), name: name.trim() });
   renderGroups();
+  renderGroupSelect();
 }
 
 function deleteGroup(id) {
@@ -57,6 +69,7 @@ function deleteGroup(id) {
   todos = todos.map(t => t.groupId === id ? { ...t, groupId: null } : t);
   if (selectedGroupId === id) selectedGroupId = null;
   renderGroups();
+  renderGroupSelect();
   render();
 }
 
@@ -64,7 +77,8 @@ function addTask() {
   const text = taskInput.value.trim();
   if (!text) return;
   const description = descInput.value.trim();
-  todos.push({ id: Date.now(), text, description, done: false, completedAt: null });
+  const groupId = groupSelectEl.value ? Number(groupSelectEl.value) : null;
+  todos.push({ id: Date.now(), text, description, done: false, groupId, completedAt: null });
   taskInput.value = '';
   descInput.value = '';
   taskInput.focus();
@@ -99,9 +113,10 @@ function deleteSelected() {
 }
 
 function filteredTodos() {
-  if (currentTab === 'progress') return todos.filter(t => !t.done);
-  if (currentTab === 'completed') return todos.filter(t => t.done);
-  return todos;
+  let list = selectedGroupId === null ? todos : todos.filter(t => t.groupId === selectedGroupId);
+  if (currentTab === 'progress') return list.filter(t => !t.done);
+  if (currentTab === 'completed') return list.filter(t => t.done);
+  return list;
 }
 
 function render() {
@@ -123,6 +138,7 @@ function render() {
 
   items.forEach(todo => {
     const li = document.createElement('li');
+    const group = groups.find(g => g.id === todo.groupId);
 
     if (todo.done) {
       // 완료 항목: 옵션 체크박스로 선택 후 삭제
@@ -180,6 +196,12 @@ function render() {
         desc.textContent = todo.description;
         textWrap.appendChild(desc);
       }
+      if (group) {
+        const badge = document.createElement('span');
+        badge.className = 'group-badge';
+        badge.textContent = group.name;
+        textWrap.appendChild(badge);
+      }
 
       const del = document.createElement('button');
       del.className = 'delete-btn';
@@ -209,4 +231,5 @@ tabBtns.forEach(btn => {
 });
 
 renderGroups();
+renderGroupSelect();
 render();

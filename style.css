@@ -224,6 +224,39 @@ h1 {
   color: #d8a0b8;
 }
 
+.form-footer {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 18px;
+}
+
+#groupSelect {
+  padding: 7px 12px;
+  border: 2px solid #f5c6d8;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #7a4060;
+  background: #fff0f6;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+#groupSelect:focus {
+  border-color: #f0a0c0;
+}
+
+.group-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #d46090;
+  background: #ffe0f0;
+  border-radius: 6px;
+  padding: 2px 8px;
+  width: fit-content;
+}
+
 /* ── 탭 ── */
 .tabs {
   display: flex;
