@@ -12,29 +12,37 @@
       <h1>TODO-List</h1>
       <p class="subtitle">오늘의 할일을 입력하세요</p>
     </div>
+    <div class="main-layout">
 
-    <div class="body-area">
-    <div class="input-row">
-      <input type="text" id="taskInput" placeholder="새 할 일을 입력하세요..." />
-      <button id="addBtn">추가</button>
-    </div>
-    <textarea id="descInput" placeholder="설명 (선택사항)..."></textarea>
+      <aside class="sidebar">
+        <div class="sidebar-title">그룹</div>
+        <ul id="groupList"></ul>
+        <button id="addGroupBtn">+ 그룹 추가</button>
+      </aside>
 
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="all">전체</button>
-      <button class="tab-btn" data-tab="progress">진행 중</button>
-      <button class="tab-btn" data-tab="completed">완료</button>
-    </div>
+      <div class="content-area">
+        <div class="input-row">
+          <input type="text" id="taskInput" placeholder="새 할 일을 입력하세요..." />
+          <button id="addBtn">추가</button>
+        </div>
+        <textarea id="descInput" placeholder="설명 (선택사항)..."></textarea>
 
-    <div id="deleteBar" class="delete-bar" style="display:none;">
-      <span id="selectedCount"></span>
-      <button id="deleteSelectedBtn">선택 삭제</button>
-    </div>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="all">전체</button>
+          <button class="tab-btn" data-tab="progress">진행 중</button>
+          <button class="tab-btn" data-tab="completed">완료</button>
+        </div>
 
-    <ul class="todo-list" id="todoList"></ul>
+        <div id="deleteBar" class="delete-bar" style="display:none;">
+          <span id="selectedCount"></span>
+          <button id="deleteSelectedBtn">선택 삭제</button>
+        </div>
+
+        <ul class="todo-list" id="todoList"></ul>
+      </div>
+
     </div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>

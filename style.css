@@ -18,7 +18,7 @@ body {
   border-radius: 20px;
   box-shadow: 0 4px 24px rgba(220, 180, 200, 0.18);
   width: 100%;
-  max-width: 560px;
+  max-width: 820px;
   padding: 0;
   height: fit-content;
   border: 1px solid #f5dce8;
@@ -47,44 +47,116 @@ h1 {
   margin-bottom: 0;
 }
 
-.body-area {
-  padding: 28px 32px;
+/* ── 레이아웃 ── */
+.main-layout {
+  display: flex;
+  min-height: 400px;
 }
 
+/* ── 사이드바 ── */
+.sidebar {
+  width: 180px;
+  flex-shrink: 0;
+  background: #fef0f6;
+  border-right: 1px solid #f5dce8;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #c07090;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+#groupList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.group-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #7a4060;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.group-item:hover {
+  background: #ffe4f0;
+}
+
+.group-item.active {
+  background: #f4a8c6;
+  color: #5a1a35;
+  font-weight: 600;
+}
+
+.group-item span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-delete-btn {
+  background: none;
+  border: none;
+  color: #e8c0d0;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.group-delete-btn:hover {
+  color: #f07090;
+}
+
+#addGroupBtn {
+  background: none;
+  border: 2px dashed #f5c6d8;
+  border-radius: 8px;
+  color: #d8a0b8;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  width: 100%;
+}
+
+#addGroupBtn:hover {
+  border-color: #f4a8c6;
+  color: #b06080;
+}
+
+/* ── 콘텐츠 영역 ── */
+.content-area {
+  flex: 1;
+  padding: 24px 28px;
+  min-width: 0;
+}
+
+/* ── 입력 폼 ── */
 .input-row {
   display: flex;
   gap: 10px;
   margin-bottom: 10px;
-}
-
-#descInput {
-  width: 100%;
-  padding: 10px 14px;
-  border: 2px solid #f5c6d8;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  color: #7a4060;
-  background: #fff0f6;
-  outline: none;
-  resize: none;
-  height: 64px;
-  font-family: inherit;
-  margin-bottom: 18px;
-  transition: border-color 0.2s;
-}
-
-#descInput:focus {
-  border-color: #f0a0c0;
-}
-
-#descInput::placeholder {
-  color: #d8a0b8;
-}
-
-.desc {
-  font-size: 0.78rem;
-  color: #b090a8;
-  word-break: break-word;
 }
 
 .input-row input {
@@ -128,6 +200,31 @@ h1 {
   transform: scale(0.97);
 }
 
+#descInput {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #f5c6d8;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: #7a4060;
+  background: #fff0f6;
+  outline: none;
+  resize: none;
+  height: 64px;
+  font-family: inherit;
+  margin-bottom: 18px;
+  transition: border-color 0.2s;
+}
+
+#descInput:focus {
+  border-color: #f0a0c0;
+}
+
+#descInput::placeholder {
+  color: #d8a0b8;
+}
+
+/* ── 탭 ── */
 .tabs {
   display: flex;
   border-bottom: 2px solid #f5dce8;
@@ -157,6 +254,7 @@ h1 {
   color: #b06080;
 }
 
+/* ── 할일 목록 ── */
 .todo-list {
   list-style: none;
   display: flex;
@@ -174,7 +272,7 @@ h1 {
 
 .todo-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
   background: #fff0f6;
@@ -198,13 +296,15 @@ h1 {
   accent-color: #88ccaa;
   cursor: pointer;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .text-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  min-width: 0;
 }
 
 .todo-item .text {
@@ -216,6 +316,12 @@ h1 {
 .todo-item.done .text {
   text-decoration: line-through;
   color: #c0a0b0;
+}
+
+.desc {
+  font-size: 0.78rem;
+  color: #b090a8;
+  word-break: break-word;
 }
 
 .completed-at {
@@ -252,8 +358,10 @@ h1 {
   accent-color: #f4a8c6;
   cursor: pointer;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
+/* ── 선택 삭제 바 ── */
 .delete-bar {
   display: flex;
   align-items: center;

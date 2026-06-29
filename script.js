@@ -1,5 +1,7 @@
 let todos = [];
+let groups = [];
 let currentTab = 'all';
+let selectedGroupId = null;
 let selectedIds = new Set();
 
 const taskInput = document.getElementById('taskInput');
@@ -10,6 +12,53 @@ const tabBtns = document.querySelectorAll('.tab-btn');
 const deleteBar = document.getElementById('deleteBar');
 const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
 const selectedCountEl = document.getElementById('selectedCount');
+const groupListEl = document.getElementById('groupList');
+const addGroupBtn = document.getElementById('addGroupBtn');
+
+// ── 그룹 관리 ──
+function renderGroups() {
+  groupListEl.innerHTML = '';
+
+  const allLi = document.createElement('li');
+  allLi.className = 'group-item' + (selectedGroupId === null ? ' active' : '');
+  allLi.textContent = '전체 그룹';
+  allLi.addEventListener('click', () => { selectedGroupId = null; renderGroups(); render(); });
+  groupListEl.appendChild(allLi);
+
+  groups.forEach(g => {
+    const li = document.createElement('li');
+    li.className = 'group-item' + (selectedGroupId === g.id ? ' active' : '');
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = g.name;
+    li.addEventListener('click', () => { selectedGroupId = g.id; renderGroups(); render(); });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'group-delete-btn';
+    delBtn.textContent = '×';
+    delBtn.title = '그룹 삭제';
+    delBtn.addEventListener('click', e => { e.stopPropagation(); deleteGroup(g.id); });
+
+    li.append(nameSpan, delBtn);
+    groupListEl.appendChild(li);
+  });
+}
+
+function addGroup() {
+  const name = prompt('새 그룹 이름을 입력하세요');
+  if (!name || !name.trim()) return;
+  groups.push({ id: Date.now(), name: name.trim() });
+  renderGroups();
+}
+
+function deleteGroup(id) {
+  if (!confirm('그룹을 삭제하면 해당 그룹의 항목이 그룹 없음으로 변경됩니다. 삭제할까요?')) return;
+  groups = groups.filter(g => g.id !== id);
+  todos = todos.map(t => t.groupId === id ? { ...t, groupId: null } : t);
+  if (selectedGroupId === id) selectedGroupId = null;
+  renderGroups();
+  render();
+}
 
 function addTask() {
   const text = taskInput.value.trim();
@@ -148,6 +197,7 @@ function render() {
 addBtn.addEventListener('click', addTask);
 taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
 deleteSelectedBtn.addEventListener('click', deleteSelected);
+addGroupBtn.addEventListener('click', addGroup);
 
 tabBtns.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -158,4 +208,5 @@ tabBtns.forEach(btn => {
   });
 });
 
+renderGroups();
 render();
