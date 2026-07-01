@@ -7,19 +7,47 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
+
+  <!-- 로그인 / 회원가입 화면 -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <h2>TODO-List</h2>
+        <p>오늘의 할일을 관리하세요</p>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-mode="signin">로그인</button>
+        <button class="auth-tab" data-mode="signup">회원가입</button>
+      </div>
+      <div class="auth-form">
+        <input type="email" id="authEmail" placeholder="이메일" autocomplete="email" />
+        <input type="password" id="authPassword" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" />
+        <button id="authSubmitBtn">로그인</button>
+        <p id="authMessage" class="auth-message"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 앱 화면 -->
+  <div id="appScreen" class="container" style="display:none;">
     <div class="header-band">
-      <h1>TODO-List</h1>
-      <p class="subtitle">오늘의 할일 입력</p>
+      <div class="header-top">
+        <div>
+          <h1>TODO-List</h1>
+          <p class="subtitle">오늘의 할일 입력</p>
+        </div>
+        <div class="header-right">
+          <span id="userEmail" class="user-email"></span>
+          <button id="logoutBtn" class="logout-btn">로그아웃</button>
+        </div>
+      </div>
     </div>
     <div class="main-layout">
-
       <aside class="sidebar">
-        <div class="sidebar-title">그룹123</div>
+        <div class="sidebar-title">그룹</div>
         <ul id="groupList"></ul>
         <button id="addGroupBtn">+ 그룹 추가</button>
       </aside>
-
       <div class="content-area">
         <div class="input-row">
           <input type="text" id="taskInput" placeholder="새 할 일을 입력하세요..." />
@@ -31,23 +59,20 @@
             <option value="">그룹 없음</option>
           </select>
         </div>
-
         <div class="tabs">
           <button class="tab-btn active" data-tab="all">전체</button>
           <button class="tab-btn" data-tab="progress">진행 중</button>
           <button class="tab-btn" data-tab="completed">완료</button>
         </div>
-
         <div id="deleteBar" class="delete-bar" style="display:none;">
           <span id="selectedCount"></span>
           <button id="deleteSelectedBtn">선택 삭제</button>
         </div>
-
         <ul class="todo-list" id="todoList"></ul>
       </div>
-
     </div>
   </div>
-  <script src="script.js"></script>
+
+  <script type="module" src="script.js"></script>
 </body>
 </html>

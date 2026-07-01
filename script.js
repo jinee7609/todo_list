@@ -1,9 +1,20 @@
+import { createClient } from '@supabase/supabase-js';
+
+const db = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+);
+
+// ── 상태 ──
 let todos = [];
 let groups = [];
 let currentTab = 'all';
 let selectedGroupId = null;
 let selectedIds = new Set();
+let currentUser = null;
+let authMode = 'signin';
 
+// ── DOM: 앱 ──
 const taskInput = document.getElementById('taskInput');
 const descInput = document.getElementById('descInput');
 const addBtn = document.getElementById('addBtn');
@@ -15,6 +26,117 @@ const selectedCountEl = document.getElementById('selectedCount');
 const groupListEl = document.getElementById('groupList');
 const addGroupBtn = document.getElementById('addGroupBtn');
 const groupSelectEl = document.getElementById('groupSelect');
+const logoutBtn = document.getElementById('logoutBtn');
+const userEmailEl = document.getElementById('userEmail');
+
+// ── DOM: 인증 ──
+const authScreen = document.getElementById('authScreen');
+const appScreen = document.getElementById('appScreen');
+const authEmail = document.getElementById('authEmail');
+const authPassword = document.getElementById('authPassword');
+const authSubmitBtn = document.getElementById('authSubmitBtn');
+const authMessage = document.getElementById('authMessage');
+const authTabs = document.querySelectorAll('.auth-tab');
+
+// ── 화면 전환 ──
+function showAuth() {
+  currentUser = null;
+  todos = [];
+  groups = [];
+  authScreen.style.display = 'flex';
+  appScreen.style.display = 'none';
+  authEmail.value = '';
+  authPassword.value = '';
+  setAuthMessage('');
+}
+
+function showApp(user) {
+  currentUser = user;
+  userEmailEl.textContent = user.email;
+  authScreen.style.display = 'none';
+  appScreen.style.display = 'block';
+  loadData();
+}
+
+// ── 인증 탭 ──
+authTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    authMode = tab.dataset.mode;
+    authTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    authSubmitBtn.textContent = authMode === 'signin' ? '로그인' : '회원가입';
+    setAuthMessage('');
+  });
+});
+
+function setAuthMessage(msg, isSuccess = false) {
+  authMessage.textContent = msg;
+  authMessage.className = 'auth-message' + (isSuccess ? ' success' : '');
+}
+
+// ── 회원가입 ──
+async function signUp() {
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  if (!email || !password) { setAuthMessage('이메일과 비밀번호를 입력하세요.'); return; }
+
+  authSubmitBtn.disabled = true;
+  const { error } = await db.auth.signUp({ email, password });
+  authSubmitBtn.disabled = false;
+
+  if (error) { setAuthMessage(error.message); return; }
+  setAuthMessage('인증 이메일을 발송했습니다. 메일함을 확인해주세요!', true);
+}
+
+// ── 로그인 ──
+async function signIn() {
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  if (!email || !password) { setAuthMessage('이메일과 비밀번호를 입력하세요.'); return; }
+
+  authSubmitBtn.disabled = true;
+  const { error } = await db.auth.signInWithPassword({ email, password });
+  authSubmitBtn.disabled = false;
+
+  if (error) { setAuthMessage(error.message); return; }
+  // onAuthStateChange가 자동으로 showApp 호출
+}
+
+// ── 로그아웃 ──
+async function signOut() {
+  await db.auth.signOut();
+  // onAuthStateChange가 자동으로 showAuth 호출
+}
+
+// ── 인증 이벤트 ──
+authSubmitBtn.addEventListener('click', () => {
+  if (authMode === 'signup') signUp();
+  else signIn();
+});
+authEmail.addEventListener('keydown', e => { if (e.key === 'Enter') authPassword.focus(); });
+authPassword.addEventListener('keydown', e => { if (e.key === 'Enter') authSubmitBtn.click(); });
+logoutBtn.addEventListener('click', signOut);
+
+// ── 데이터 로드 ──
+async function loadData() {
+  const [{ data: groupsData, error: gErr }, { data: todosData, error: tErr }] = await Promise.all([
+    db.from('groups').select('*').order('created_at'),
+    db.from('todos').select('*').order('created_at')
+  ]);
+
+  if (gErr || tErr) {
+    const msg = (gErr || tErr).message;
+    console.error('데이터 로드 실패:', gErr || tErr);
+    alert('데이터 로드 실패: ' + msg);
+    return;
+  }
+
+  groups = groupsData || [];
+  todos = todosData || [];
+  renderGroups();
+  renderGroupSelect();
+  render();
+}
 
 // ── 그룹 관리 ──
 function renderGroups() {
@@ -55,30 +177,55 @@ function renderGroupSelect() {
   });
 }
 
-function addGroup() {
+async function addGroup() {
   const name = prompt('새 그룹 이름을 입력하세요');
   if (!name || !name.trim()) return;
-  groups.push({ id: Date.now(), name: name.trim() });
+
+  const { data, error } = await db.from('groups').insert({
+    name: name.trim(),
+    user_id: currentUser.id
+  }).select().single();
+  if (error) { alert('그룹 추가 실패: ' + error.message); return; }
+
+  groups.push(data);
   renderGroups();
   renderGroupSelect();
 }
 
-function deleteGroup(id) {
+async function deleteGroup(id) {
   if (!confirm('그룹을 삭제하면 해당 그룹의 항목이 그룹 없음으로 변경됩니다. 삭제할까요?')) return;
+
+  const { error } = await db.from('groups').delete().eq('id', id);
+  if (error) { alert('그룹 삭제 실패: ' + error.message); return; }
+
   groups = groups.filter(g => g.id !== id);
-  todos = todos.map(t => t.groupId === id ? { ...t, groupId: null } : t);
+  todos = todos.map(t => t.group_id === id ? { ...t, group_id: null } : t);
   if (selectedGroupId === id) selectedGroupId = null;
   renderGroups();
   renderGroupSelect();
   render();
 }
 
-function addTask() {
+// ── 할 일 관리 ──
+async function addTask() {
   const text = taskInput.value.trim();
   if (!text) return;
-  const description = descInput.value.trim();
-  const groupId = groupSelectEl.value ? Number(groupSelectEl.value) : null;
-  todos.push({ id: Date.now(), text, description, done: false, groupId, completedAt: null });
+
+  const description = descInput.value.trim() || null;
+  const group_id = groupSelectEl.value || null;
+
+  const { data, error } = await db.from('todos').insert({
+    text,
+    description,
+    done: false,
+    group_id,
+    completed_at: null,
+    user_id: currentUser.id
+  }).select().single();
+
+  if (error) { console.error('할 일 추가 실패:', error); alert('할 일 추가 실패: ' + error.message); return; }
+
+  todos.push(data);
   taskInput.value = '';
   descInput.value = '';
   taskInput.focus();
@@ -90,30 +237,44 @@ function formatDate(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function toggleDone(id) {
-  todos = todos.map(t => {
-    if (t.id !== id) return t;
-    const done = !t.done;
-    return { ...t, done, completedAt: done ? formatDate(new Date()) : null };
-  });
+async function toggleDone(id) {
+  const todo = todos.find(t => t.id === id);
+  if (!todo) return;
+
+  const done = !todo.done;
+  const completed_at = done ? formatDate(new Date()) : null;
+
+  const { error } = await db.from('todos').update({ done, completed_at }).eq('id', id);
+  if (error) { alert('상태 변경 실패: ' + error.message); return; }
+
+  todos = todos.map(t => t.id === id ? { ...t, done, completed_at } : t);
   selectedIds.delete(id);
   render();
 }
 
-function deleteTask(id) {
+async function deleteTask(id) {
+  const { error } = await db.from('todos').delete().eq('id', id);
+  if (error) { alert('삭제 실패: ' + error.message); return; }
+
   todos = todos.filter(t => t.id !== id);
   selectedIds.delete(id);
   render();
 }
 
-function deleteSelected() {
+async function deleteSelected() {
+  const ids = [...selectedIds];
+
+  const { error } = await db.from('todos').delete().in('id', ids);
+  if (error) { alert('삭제 실패: ' + error.message); return; }
+
   todos = todos.filter(t => !selectedIds.has(t.id));
   selectedIds.clear();
   render();
 }
 
+// ── 필터 & 렌더 ──
 function filteredTodos() {
-  let list = selectedGroupId === null ? todos : todos.filter(t => t.groupId === selectedGroupId);
+  let list = selectedGroupId === null ? todos : todos.filter(t => t.group_id === selectedGroupId);
   if (currentTab === 'progress') return list.filter(t => !t.done);
   if (currentTab === 'completed') return list.filter(t => t.done);
   return list;
@@ -123,7 +284,6 @@ function render() {
   const items = filteredTodos();
   todoList.innerHTML = '';
 
-  // 완료 상태가 아닌 항목은 선택 해제
   selectedIds = new Set([...selectedIds].filter(id => todos.find(t => t.id === id && t.done)));
 
   const selCount = selectedIds.size;
@@ -138,10 +298,9 @@ function render() {
 
   items.forEach(todo => {
     const li = document.createElement('li');
-    const group = groups.find(g => g.id === todo.groupId);
+    const group = groups.find(g => g.id === todo.group_id);
 
     if (todo.done) {
-      // 완료 항목: 옵션 체크박스로 선택 후 삭제
       li.className = 'todo-item done' + (selectedIds.has(todo.id) ? ' selected' : '');
 
       const selectBox = document.createElement('input');
@@ -163,7 +322,7 @@ function render() {
 
       const time = document.createElement('span');
       time.className = 'completed-at';
-      time.textContent = todo.completedAt || '';
+      time.textContent = todo.completed_at || '';
 
       textWrap.append(span, time);
       if (todo.description) {
@@ -174,7 +333,6 @@ function render() {
       }
       li.append(selectBox, textWrap);
     } else {
-      // 진행 중 항목: 완료 체크박스 + 즉시 삭제 버튼
       li.className = 'todo-item';
 
       const checkbox = document.createElement('input');
@@ -216,6 +374,7 @@ function render() {
   });
 }
 
+// ── 앱 이벤트 ──
 addBtn.addEventListener('click', addTask);
 taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
 deleteSelectedBtn.addEventListener('click', deleteSelected);
@@ -230,6 +389,11 @@ tabBtns.forEach(btn => {
   });
 });
 
-renderGroups();
-renderGroupSelect();
-render();
+// ── 인증 상태 감지 (초기 세션 포함) ──
+db.auth.onAuthStateChange((_event, session) => {
+  if (session) {
+    showApp(session.user);
+  } else {
+    showAuth();
+  }
+});
